@@ -1,12 +1,26 @@
 # 为每条产线找到最优解
 import random
-from model import ProductionLine, Material, MaterialLine, AssignState
+from model import ProductionLine, Material, MaterialLine, AssignState,MonthProduction
 from utils import generate_random_string
 import pandas as pd
 from typing import Tuple
 
 
 def assignMain():
+    for month in range(1, 13):
+        materials, production_lines = getMonthMaterialsAndProductionLines(month)
+        # 分配算法
+        for material in materials:
+            best_line, need_usage = getBestLineAndNeedUsageByMaterial(material)
+            if best_line is not None:
+                best_line.produce_material.append(material)
+                best_line.usage += need_usage
+        monthProduction = MonthProduction(month=month,production_lines=production_lines)
+        print(monthProduction.getMonthLineData())
+        
+
+def getMonthMaterialsAndProductionLines(month):
+    # TODO:获取指定月份的物料和产线数据,产线是需要重新实例化的,因为每月产线都从0开始运作
     # 生成 10 个产线数据
     production_lines = [ProductionLine(
         name=generate_random_string(10),
@@ -24,27 +38,8 @@ def assignMain():
         material_desc=generate_random_string(15),
         req=random.randint(50, 500),
         production_lines=[MaterialLine(line=random.choice(production_lines), ct=random.randint(10, 50)) for _ in range(random.randint(1, 5))]
-    ) for _ in range(1000)]
-    # 分配算法
-    for material in materials:
-        best_line, need_usage = getBestLineAndNeedUsageByMaterial(material)
-        if best_line is not None:
-            best_line.produce_material.append(material)
-            best_line.usage += need_usage
-    finallyDatas = []
-    for line in production_lines:
-        finallyDatas.append({
-            "line": line.name,
-            "init_life": line.init_life,
-            "usage": line.usage,
-            "target_usage_rate": line.target_usage_rate,
-            "usage_rate": line.usage_rate,
-            "remaining_life": line.remaining_life,
-            "produce_material": [material.name for material in line.produce_material]
-        })
-    df = pd.DataFrame(finallyDatas)
-    print(df)
-
+    ) for _ in range(1000)] # production_lines 只能从当月生成的产线中选择
+    return materials, production_lines
 
 def getBestLineAndNeedUsageByMaterial(material: Material) -> Tuple[ProductionLine, int]:
     """获取最优产线,不对产线作修改,只获取最优产线

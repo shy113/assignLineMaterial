@@ -1,11 +1,14 @@
 # 模型文件
 from typing import List, Dict, Any
+import pandas as pd
 
 
 class AssignState:
     """分配状态"""
     ASSIGNING = '分配中'
     FINISHED = '已完成'
+
+
 
 
 class ProductionLine:
@@ -42,8 +45,7 @@ class ProductionLine:
 
 
 class MaterialLine:
-    """物料和产线的关系,即该物料可在哪条线上生产和它在该条线一件所消耗的时间
-    """
+    """物料和产线的关系,即该物料可在哪条线上生产和它在该条线一件所消耗的时间 """
 
     def __init__(self, line: ProductionLine, ct):
         self.line = line
@@ -51,6 +53,7 @@ class MaterialLine:
 
 
 class Material:
+    """ 物料基础信息 """
     def __init__(self, name='', code='', material_type='',
                  material_desc='', req=0,
                  production_lines: List[MaterialLine] = []):
@@ -60,3 +63,27 @@ class Material:
         self.material_desc = material_desc
         self.req = req
         self.production_lines = production_lines
+
+
+class MonthProduction:
+    """月度产量"""
+    def __init__(self, month: int, production_lines: List[MaterialLine] = []):
+        self.month = month
+        self.production_lines = production_lines
+    
+    def getMonthLineData(self) -> pd.DataFrame:
+        """获取月度产线数据"""
+        finallyDatas = []
+        for line in self.production_lines:
+            finallyDatas.append({
+                "month": self.month,
+                "line": line.name,
+                "init_life": line.init_life,
+                "usage": line.usage,
+                "target_usage_rate": line.target_usage_rate,
+                "usage_rate": line.usage_rate,
+                "remaining_life": line.remaining_life,
+                "produce_material": [material.name for material in line.produce_material]
+            })
+        df = pd.DataFrame(finallyDatas)
+        return df
